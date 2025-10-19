@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use App\Models\Department;
+use App\Models\Position;
 
 class EmployeeController extends Controller
 {
@@ -12,7 +14,8 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $employees = Employee::latest()->paginate(5);
+        // Gunakan 'with' untuk mengambil data relasi secara efisien (Eager Loading)
+        $employees = Employee::with(['department', 'position'])->latest()->paginate(10);
         return view('employee.index', compact('employees'));
     }
 
@@ -21,7 +24,10 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        return view('employee.create');
+        // Ambil data departments dan positions untuk dikirim ke form
+        $departments = Department::orderBy('nama_departemen')->get();
+        $positions = Position::orderBy('nama_jabatan')->get();
+        return view('employee.create', compact('departments', 'positions'));
     }
 
     /**
@@ -30,16 +36,14 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'tanggal_lahir' => 'required|date',
-            'alamat' => 'required|string|max:255',
-            'tanggal_masuk' => 'required|date',
-            'status' => 'required|string|max:50',
-    ]);
-    Employee::create($request->all());
-    return redirect()->route('employees.index');
+            // ... validasi lainnya ...
+            'department_id' => 'nullable|exists:departments,id',
+            'position_id' => 'nullable|exists:positions,id',
+        ]);
+
+        Employee::create($request->all());
+
+        return redirect()->route('employees.index')->with('success', 'Karyawan baru berhasil ditambahkan!');
     }
 
     /**
@@ -54,37 +58,28 @@ class EmployeeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Employee $employee)
     {
-        $employee = Employee::find($id);
-        return view('employee.edit',compact('employee'));
+        // Kirim juga data department dan position ke form edit
+        $departments = Department::orderBy('nama_departemen')->get();
+        $positions = Position::orderBy('nama_jabatan')->get();
+        return view('employee.edit', compact('employee', 'departments', 'positions'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Employee $employee)
     {
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'tanggal_lahir' => 'required|date',
-            'alamat' => 'required|string|max:255',
-            'tanggal_masuk' => 'required|date',
-            'status' => 'required|string|max:50',
+            // ... validasi lainnya ...
+            'department_id' => 'nullable|exists:departments,id',
+            'position_id' => 'nullable|exists:positions,id',
         ]);
-        $employee = Employee::findOrFail($id);
-        $employee->update($request->only([
-            'nama_lengkap',
-            'email',
-            'nomor_telepon',
-            'tanggal_lahir',
-            'alamat',
-            'tanggal_masuk',
-            'status',
-        ]));
-        return redirect()->route('employees.index');
+        
+        $employee->update($request->all());
+
+        return redirect()->route('employees.index')->with('success', 'Data karyawan berhasil diperbarui!');
     }
 
     /**

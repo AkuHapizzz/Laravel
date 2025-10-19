@@ -10,16 +10,21 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('attendance', function (Blueprint $table) {
+        // Menggunakan nama tabel plural 'attendances' sesuai konvensi Laravel
+        Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('karyawan_id');
+
+            // Cara modern untuk membuat foreign key
+            // 'employee_id' mengacu pada model 'Employee'
+            $table->foreignId('employee_id')
+                  ->constrained('employees') // Terhubung ke tabel 'employees'
+                  ->onDelete('cascade');    // Jika pegawai dihapus, absensinya juga terhapus
+
             $table->date('tanggal');
-            $table->time('waktu_masuk')->nullable();
-            $table->time('waktu_keluar')->nullable();
-            $table->enum('status_absensi', ['hadir', 'izin', 'sakit', 'alpha']);
+            $table->time('waktu_masuk');
+            $table->time('waktu_keluar')->nullable(); // Boleh kosong saat baru absen masuk
+            $table->enum('status', ['Hadir', 'Izin', 'Sakit', 'Alpha']);
             $table->timestamps();
-            // Foreign key constraint
-            $table->foreign('karyawan_id')->references('id')->on('employees')->onDelete('cascade');
         });
     }
 

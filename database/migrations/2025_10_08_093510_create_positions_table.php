@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_jabatan', 100);
-            $table->decimal('gaji_pokok', 10, 2);
+            $table->string('nama_jabatan')->unique();
+            $table->decimal('gaji_pokok', 10, 2); // Angka desimal untuk gaji
             $table->timestamps();
         });
     }
